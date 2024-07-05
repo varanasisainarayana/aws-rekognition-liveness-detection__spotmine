@@ -1,96 +1,110 @@
 import React, { useEffect, useState } from "react";
-import { Loader } from '@aws-amplify/ui-react';
-import '@aws-amplify/ui-react/styles.css';
-import { FaceLivenessDetector } from '@aws-amplify/ui-react-liveness';
-import { v4 as uuidv4 } from 'uuid';
-
+import { Loader } from "@aws-amplify/ui-react";
+import "@aws-amplify/ui-react/styles.css";
+import { FaceLivenessDetector } from "@aws-amplify/ui-react-liveness";
+import { v4 as uuidv4 } from "uuid";
+import { useStores } from "../store/index";
+import { useNavigate } from "react-router-dom";
 
 function FaceLiveness({ faceLivenessAnalysis }) {
-    const [loading, setLoading] = useState(true);
-    const [sessionId, setSessionId] = useState(null);
-    
-    const endpoint = process.env.REACT_APP_ENV_API_URL || '';
-    
-    const myHeaders = new Headers();
-    myHeaders.append("Content-Type", "application/json");
-    myHeaders.append("X-API-KEY", "3646f320-aee6-452f-96f8-23718f3000b6");
+  const [loading, setLoading] = useState(true);
+  const [sessionId, setSessionId] = useState(null);
+  const { CommonStore } = useStores();
+  const navigate = useNavigate();
 
-    const newUUID = uuidv4();
-    console.log(newUUID); // This will log a new UUID to the console
+  const endpoint = process.env.REACT_APP_ENV_API_URL || "";
 
+  const myHeaders = new Headers();
+  myHeaders.append("Content-Type", "application/json");
+  myHeaders.append("X-API-KEY", "3646f320-aee6-452f-96f8-23718f3000b6");
 
-    const raw = JSON.stringify({
-        "reqToken": newUUID
-    });
+  const newUUID = uuidv4();
+  console.log(newUUID); // This will log a new UUID to the console
 
-    const requestOptions = {
-        method: "POST",
-        headers: myHeaders,
-        body: raw,
-        redirect: "follow"
-    };
+  const raw = JSON.stringify({
+    reqToken: newUUID,
+  });
 
-    useEffect(() => {
-        const fetchCreateLiveness = async () => {
-            try {
-                console.log("Starting fetch...");
-                const response = await fetch("https://ssiapi-staging.smartfalcon.io/liveness/create", requestOptions);
-                console.log("Fetch response received...");
-                if (!response.ok) {
-                    throw new Error(`HTTP error! status: ${response.status}`);
-                }
-                const data = await response.json();
-                setSessionId(data.sessionId);
-                setLoading(false);
-                console.log("Fetch success:", data);
-            } catch (error) {
-                console.error("Failed to create liveness session:", error);
-                setLoading(false);
-            }
-        };
-        fetchCreateLiveness();
-    }, []);
-    
-    
+  const requestOptions = {
+    method: "POST",
+    headers: myHeaders,
+    body: raw,
+    redirect: "follow",
+  };
 
-    const handleAnalysisComplete = async () => {
-        try {
-            const response = await fetch("https://ssiapi-staging.smartfalcon.io/liveness/create", {
-                method: 'POST',
-                headers: {  
-                    'Accept': 'application/json',
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({ sessionid: sessionId })
-            });
-            if (!response.ok) {
-                throw new Error(`Error: ${response.statusText}`);
-            }
-            const data = await response.json();
-            faceLivenessAnalysis(data.body);
-        } catch (error) {
-            console.error("Failed to get liveness session results:", error);
+  useEffect(() => {
+    const fetchCreateLiveness = async () => {
+      try {
+        console.log("Starting fetch...");
+        const response = await fetch(
+          "https://ssiapi-staging.smartfalcon.io/liveness/create",
+          requestOptions
+        );
+        console.log("Fetch response received...");
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
         }
+        const data = await response.json();
+        setSessionId(data?.sessionId);
+        CommonStore.setSessionId(data?.sessionId);
+        console.log("Session ID:", CommonStore.sessionId);
+        setLoading(false);
+        console.log("Fetch success:", data);
+      } catch (error) {
+        console.error("Failed to create liveness session:", error);
+        setLoading(false);
+      }
     };
+    fetchCreateLiveness();
+  }, []);
 
-    return (
+  const handleAnalysisComplete = async () => {
+    try {
+      const response = await fetch(
+        `https://ssiapi-staging.smartfalcon.io/liveness/${sessionId}`,
+        {
+          // method: 'GET',
+          // headers: {
+          //     'Accept': 'application/json',
+          //     'Content-Type': 'application/json'
+          // },
+        }
+      );
+      if (!response.ok) {
+        throw new Error(`Error: ${response.statusText}`);
+      }
+      const data = await response.json();
+      faceLivenessAnalysis(data.body);
+    } catch (error) {
+      console.error("Failed to get liveness session results:", error);
+    }
+  };
+
+  return (
+    <>
+      {loading ? (
+        <Loader />
+      ) : sessionId ? (
         <>
-            {loading ? (
-                <Loader />
-            ) : sessionId ? (
-                <FaceLivenessDetector
-                    sessionId={sessionId}
-                    region="us-east-1"
-                    onAnalysisComplete={handleAnalysisComplete}
-                    onError={(error) => {
-                        console.error(error);
-                    }}
-                />
-            ) : (
-                <p>Error: Unable to start the session. Please try again later.</p>
-            )}
+          <FaceLivenessDetector
+            sessionId={sessionId}
+            region="us-east-1"
+            onAnalysisComplete={handleAnalysisComplete}
+            onError={(error) => {
+              console.error(error);
+            }}
+          />
+          <button
+            onClick={() => navigate("/aadhaar")}
+            style={{ cursor: "pointer" }}>
+            Go To aadhar scan
+          </button>
         </>
-    );
+      ) : (
+        <p>Error: Unable to start the session. Please try again later.</p>
+      )}
+    </>
+  );
 }
 
 export default FaceLiveness;
