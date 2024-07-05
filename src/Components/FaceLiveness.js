@@ -97,7 +97,7 @@ function FaceLiveness({ faceLivenessAnalysis }) {
           <button
             onClick={() => navigate("/aadhaar")}
             style={{ cursor: "pointer" }}>
-            Go To aadhar scan
+            Go To aadhar scan 
           </button>
         </>
       ) : (
