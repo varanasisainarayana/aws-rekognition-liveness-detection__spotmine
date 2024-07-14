@@ -32,12 +32,14 @@ function FaceLiveness({ faceLivenessAnalysis }) {
     redirect: "follow",
   };
 
+  const param = "X-API-KEY=3646f320-aee6-452f-96f8-23718f3000b6"
+
   useEffect(() => {
     const fetchCreateLiveness = async () => {
       try {
         console.log("Starting fetch...");
         const response = await fetch(
-          "https://ssiapi-staging.smartfalcon.io/liveness/create",
+          `https://humbly-logical-loon.ngrok-free.app/liveness/create?${param}`,
           requestOptions
         );
         console.log("Fetch response received...");
@@ -61,7 +63,7 @@ function FaceLiveness({ faceLivenessAnalysis }) {
   const handleAnalysisComplete = async () => {
     try {
       const response = await fetch(
-        `https://ssiapi-staging.smartfalcon.io/liveness/${sessionId}`,
+        `https://humbly-logical-loon.ngrok-free.app/liveness/result/${sessionId}?${param}`,
         {
           // method: 'GET',
           // headers: {
@@ -84,7 +86,7 @@ function FaceLiveness({ faceLivenessAnalysis }) {
     <>
       {loading ? (
         <Loader />
-      ) : sessionId ? (
+      ) : sessionId!=null ? (
         <>
           <FaceLivenessDetector
             sessionId={sessionId}
