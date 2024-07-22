@@ -32,14 +32,13 @@ function FaceLiveness({ faceLivenessAnalysis }) {
     redirect: "follow",
   };
 
-  const param = "X-API-KEY=3646f320-aee6-452f-96f8-23718f3000b6"
 
   useEffect(() => {
     const fetchCreateLiveness = async () => {
       try {
         console.log("Starting fetch...");
         const response = await fetch(
-          `https://humbly-logical-loon.ngrok-free.app/liveness/create?${param}`,
+          `https://ssiapi-staging.smartfalcon.io/liveness/create`,
           requestOptions
         );
         console.log("Fetch response received...");
@@ -62,21 +61,24 @@ function FaceLiveness({ faceLivenessAnalysis }) {
 
   const handleAnalysisComplete = async () => {
     try {
-      const response = await fetch(
-        `https://humbly-logical-loon.ngrok-free.app/liveness/result/${sessionId}?${param}`,
-        {
-          // method: 'GET',
-          // headers: {
-          //     'Accept': 'application/json',
-          //     'Content-Type': 'application/json'
-          // },
-        }
-      );
-      if (!response.ok) {
-        throw new Error(`Error: ${response.statusText}`);
-      }
-      const data = await response.json();
-      faceLivenessAnalysis(data.body);
+      const myHeaders = new Headers();
+      myHeaders.append("Accept", "/");
+      myHeaders.append("Accept-Encoding", "gzip, deflate, br");
+      myHeaders.append("Connection", "keep-alive");
+      myHeaders.append("X-API-KEY", "3646f320-aee6-452f-96f8-23718f3000b6");
+      const requestOptions = {
+        method: "GET",
+        headers: myHeaders,
+        redirect: "follow",
+      };
+
+      fetch(
+        `https://ssiapi-staging.smartfalcon.io/liveness/result/${sessionId}`,
+        requestOptions
+      )
+        .then((response) => response.text())
+        .then((result) => console.log(result))
+        .catch((error) => console.error(error));
     } catch (error) {
       console.error("Failed to get liveness session results:", error);
     }
