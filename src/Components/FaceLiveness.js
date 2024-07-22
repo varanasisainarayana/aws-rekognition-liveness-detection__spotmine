@@ -90,10 +90,10 @@ function FaceLiveness({ faceLivenessAnalysis }) {
         <>
           <FaceLivenessDetector
             sessionId={sessionId}
-            region="us-east-1"
+            region="ap-south-1"
             onAnalysisComplete={handleAnalysisComplete}
             onError={(error) => {
-              console.error(error);
+              console.log(error);
             }}
           />
           <button
