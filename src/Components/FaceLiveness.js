@@ -5,10 +5,12 @@ import { FaceLivenessDetector } from "@aws-amplify/ui-react-liveness";
 import { v4 as uuidv4 } from "uuid";
 import { useStores } from "../store/index";
 import { useNavigate } from "react-router-dom";
+import toast, { Toaster } from "react-hot-toast";
 
 function FaceLiveness({ faceLivenessAnalysis }) {
   const [loading, setLoading] = useState(true);
   const [sessionId, setSessionId] = useState(null);
+  const [analysisComplete, setAnalysisComplete] = useState(false); // State to track analysis completion
   const { CommonStore } = useStores();
   const navigate = useNavigate();
 
@@ -31,7 +33,6 @@ function FaceLiveness({ faceLivenessAnalysis }) {
     body: raw,
     redirect: "follow",
   };
-
 
   useEffect(() => {
     const fetchCreateLiveness = async () => {
@@ -66,19 +67,22 @@ function FaceLiveness({ faceLivenessAnalysis }) {
       myHeaders.append("Accept-Encoding", "gzip, deflate, br");
       myHeaders.append("Connection", "keep-alive");
       myHeaders.append("X-API-KEY", "3646f320-aee6-452f-96f8-23718f3000b6");
+
       const requestOptions = {
         method: "GET",
         headers: myHeaders,
         redirect: "follow",
       };
 
-      fetch(
+      const response = await fetch(
         `https://ssiapi-staging.smartfalcon.io/liveness/result/${sessionId}`,
         requestOptions
-      )
-        .then((response) => response.text())
-        .then((result) => console.log(result))
-        .catch((error) => console.error(error));
+      );
+      const result = await response.text();
+      toast.success("Success!");
+      setLoading(false);
+      setAnalysisComplete(true); // Mark analysis as complete
+      console.log(result);
     } catch (error) {
       console.error("Failed to get liveness session results:", error);
     }
@@ -86,22 +90,39 @@ function FaceLiveness({ faceLivenessAnalysis }) {
 
   return (
     <>
+      <Toaster />
       {loading ? (
         <Loader />
-      ) : sessionId!=null ? (
+      ) : sessionId != null ? (
         <>
-          <FaceLivenessDetector
-            sessionId={sessionId}
-            region="ap-south-1"
-            onAnalysisComplete={handleAnalysisComplete}
-            onError={(error) => {
-              console.log(error);
-            }}
-          />
+          {!analysisComplete && (
+            <FaceLivenessDetector
+              sessionId={sessionId}
+              region="ap-south-1"
+              onAnalysisComplete={handleAnalysisComplete}
+              onError={(error) => {
+                console.log(error);
+              }}
+            />
+          )}
+          {analysisComplete && (
+            <p
+              style={{
+                display: "flex",
+                flexDirection: "column",
+                alignItems: "center",
+                justifyContent: "center",
+                height: "40vh",
+              }}
+            >
+              Analysis complete. You can proceed to the next step.
+            </p>
+          )}
           <button
             onClick={() => navigate("/aadhaar")}
-            style={{ cursor: "pointer" }}>
-            Go To aadhar scan 
+            style={{ cursor: "pointer" }}
+          >
+            Go To aadhar scan
           </button>
         </>
       ) : (
